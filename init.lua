@@ -20,6 +20,7 @@ do
   vim.g.mapleader = ' '
   vim.g.maplocalleader = ' '
   vim.g.have_nerd_font = false
+  vim.g.netrw_bufsettings = 'noma nomod nu rnu nobl nowrap ro'
   vim.o.number = true
   vim.o.relativenumber = true
   vim.o.mouse = 'a'
@@ -36,6 +37,7 @@ do
   vim.o.splitbelow = true
   vim.o.list = true
   vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+  vim.opt.wrap = false
   vim.o.inccommand = 'split'
   vim.o.cursorline = true
   vim.o.scrolloff = 10
@@ -50,9 +52,17 @@ do
   -- [[ Basic Keymaps ]]
   --  See `:help vim.keymap.set()`
 
-  vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+  -- vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+  vim.keymap.set('n', '<Esc>', function()
+    vim.cmd('nohlsearch')
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      if vim.api.nvim_win_get_config(win).relative ~= '' then
+        vim.api.nvim_win_close(win, false)
+      end
+    end
+  end, { desc = 'Clear highlights and close floats' })
+  
   vim.keymap.set('n', '<C-s>', '<cmd>w<CR>')
-  -- vim.keymap.set('n', '<leader><CR>', '<cmd>so $HOME\\AppData\\Local\\nvim\\init.lua<CR>')
   vim.keymap.set('n', '<leader><CR>', '<cmd>source $MYVIMRC<CR>', { desc = 'Reload init.lua' })
   vim.keymap.set('n', '<leader>pv', '<cmd>Vex<CR>')
   vim.keymap.set('n', '<leader>t', ':terminal<CR>')
@@ -535,7 +545,7 @@ do
   local servers = {
     -- clangd = {},
     -- gopls = {},
-    -- pyright = {},
+    pyright = {},
     -- rust_analyzer = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -678,7 +688,7 @@ do
       --    This will auto-import if your LSP supports it.
       --    This will expand snippets if the LSP sent a snippet.
       -- 'super-tab' for tab to accept
-      -- 'enter' for enter to accept
+      -- 'enter', for enter to accept
       -- 'none' for no mappings
       --
       -- For an understanding of why the 'default' preset is recommended,
@@ -694,7 +704,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'enter',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
