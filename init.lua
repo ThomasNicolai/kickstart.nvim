@@ -51,7 +51,14 @@ do
   --  See `:help vim.keymap.set()`
 
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-
+  vim.keymap.set('n', '<C-s>', '<cmd>w<CR>')
+  -- vim.keymap.set('n', '<leader><CR>', '<cmd>so $HOME\\AppData\\Local\\nvim\\init.lua<CR>')
+  vim.keymap.set('n', '<leader><CR>', '<cmd>source $MYVIMRC<CR>', { desc = 'Reload init.lua' })
+  vim.keymap.set('n', '<leader>pv', '<cmd>Vex<CR>')
+  vim.keymap.set('n', '<leader>t', ':terminal<CR>')
+  vim.keymap.set('t', '<Esc>', '<C-\\><C-n>')
+  vim.keymap.set('n', '<C-q>', '<C-^>')
+  --
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
   vim.diagnostic.config {
@@ -61,8 +68,8 @@ do
     underline = { severity = { min = vim.diagnostic.severity.WARN } },
 
     -- Can switch between these as you prefer
-    virtual_text = false, -- Text shows up at the end of the line
-    virtual_lines = true, -- Text shows up underneath the line, with virtual lines
+    virtual_text = true, -- Text shows up at the end of the line
+    virtual_lines = false, -- Text shows up underneath the line, with virtual lines
 
     -- Auto open the float, so you can easily read the errors when jumping with `[d` and `]d`
     jump = {
@@ -118,24 +125,10 @@ end
 -- vim.pack intro, build hooks
 -- ============================================================
 do
-  -- [[ Intro to `vim.pack` ]]
-  -- `vim.pack` is a new plugin manager built into Neovim,
-  --  which provides a Lua interface for installing and managing plugins.
-  --
-  --  See `:help vim.pack`, `:help vim.pack-examples` or the
-  --  excellent blog post from the creator of vim.pack and mini.nvim:
-  --  https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack
-  --
   --  To inspect plugin state and pending updates, run
   --    :lua vim.pack.update(nil, { offline = true })
-  --
   --  To update plugins, run
   --    :lua vim.pack.update()
-  --
-  --
-  --  Throughout the rest of the config there will be examples
-  --  of how to install and configure plugins using `vim.pack`.
-  --
   --  In this section we set up some autocommands to run build
   --  steps for certain plugins after they are installed or updated.
 
@@ -218,21 +211,6 @@ do
       delete = { text = '_' }, ---@diagnostic disable-line: missing-fields
       topdelete = { text = '‾' }, ---@diagnostic disable-line: missing-fields
       changedelete = { text = '~' }, ---@diagnostic disable-line: missing-fields
-    },
-  }
-
-  -- Useful plugin to show you pending keybinds.
-  vim.pack.add { gh 'folke/which-key.nvim' }
-  require('which-key').setup {
-    -- Delay between pressing a key and opening which-key (milliseconds)
-    delay = 0,
-    icons = { mappings = vim.g.have_nerd_font },
-    -- Document existing key chains
-    spec = {
-      { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
-      { '<leader>t', group = '[T]oggle' },
-      { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
-      { 'gr', group = 'LSP Actions', mode = { 'n' } },
     },
   }
 
@@ -360,7 +338,9 @@ do
   local builtin = require 'telescope.builtin'
   vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
   vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-  vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+  -- vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+  vim.keymap.set('n', '<C-p>', builtin.git_files, { desc = '[S]earch [F]iles' })
+  vim.keymap.set('n', '<leader>ps', builtin.find_files, { desc = '[P]roject [S]earch' })
   vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
   vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
   vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
@@ -384,10 +364,12 @@ do
       -- Useful when your language has ways of declaring types without an actual implementation.
       vim.keymap.set('n', 'gri', builtin.lsp_implementations, { buffer = buf, desc = '[G]oto [I]mplementation' })
 
+
       -- Jump to the definition of the word under your cursor.
       -- This is where a variable was first declared, or where a function is defined, etc.
       -- To jump back, press <C-t>.
-      vim.keymap.set('n', 'grd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
+      -- vim.keymap.set('n', 'grd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
+      vim.keymap.set('n', 'gd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
 
       -- Fuzzy find all the symbols in your current document.
       -- Symbols are things like variables, functions, types, etc.
@@ -401,6 +383,18 @@ do
       -- Useful when you're not sure what type a variable is and you want to see
       -- the definition of its *type*, not where it was *defined*.
       vim.keymap.set('n', 'grt', builtin.lsp_type_definitions, { buffer = buf, desc = '[G]oto [T]ype Definition' })
+      -- Show LSP hover documentation and diagnostic information under the cursor.
+      -- vim.keymap.set('n', 'gh', vim.lsp.buf.hover, { buffer = buf, desc = 'LSP [G]et [H]over info' })
+      vim.keymap.set('n', 'gh', function()
+        -- Check if there are any diagnostics on the current line
+        local diagnostics = vim.diagnostic.get(0, { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 })
+        if not vim.tbl_isempty(diagnostics) then
+          vim.diagnostic.open_float()
+        else
+          vim.lsp.buf.hover()
+        end
+      end, { buffer = buf, desc = 'Smart LSP Hover/Diagnostic' })
+      
     end,
   })
 
@@ -548,7 +542,7 @@ do
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
 
     stylua = {}, -- Used to format Lua code
 
@@ -616,6 +610,7 @@ do
     vim.lsp.enable(name)
   end
 end
+-- =====================================================================
 
 -- ============================================================
 -- SECTION 7: FORMATTING
@@ -855,3 +850,35 @@ vim.keymap.set("n", "<C-l>", function() harpoon:list():select(4) end)
 vim.keymap.set("n", "<C-S-P>", function() harpoon:list():prev() end)
 vim.keymap.set("n", "<C-S-N>", function() harpoon:list():next() end)
 
+-- make file navigation feel like it did in vscode:
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "netrw",
+  callback = function()
+    local opts = { remap = true, buffer = true, silent = true }
+    -- h moves up a directory
+    vim.keymap.set("n", "h", "-", opts)
+    -- l opens a directory or file (acts like Enter)
+    vim.keymap.set("n", "l", "<CR>", opts)
+  end,
+})
+-- Safely wait for lazy.nvim to finish loading plugins before overriding LSP defaults
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LazyDone",
+  once = true,
+  callback = function()
+    -- Check if both required plugins are available
+    local has_lspconfig, lspconfig = pcall(require, 'lspconfig')
+    local has_blink, blink = pcall(require, 'blink.cmp')
+
+    if has_lspconfig and has_blink then
+      -- Inject blink capabilities into the global lspconfig default settings
+      lspconfig.util.default_config.capabilities = vim.tbl_deep_extend(
+        'force',
+        lspconfig.util.default_config.capabilities,
+        blink.get_lsp_capabilities()
+      )
+    end
+  end,
+})
+-- =====================================================================
