@@ -64,7 +64,8 @@ do
   
   vim.keymap.set('n', '<C-s>', '<cmd>w<CR>')
   vim.keymap.set('n', '<leader><CR>', '<cmd>source $MYVIMRC<CR>', { desc = 'Reload init.lua' })
-  vim.keymap.set('n', '<leader>pv', '<cmd>Vex<CR>')
+  -- vim.keymap.set('n', '<leader>pv', '<cmd>Vex<CR>')
+  vim.keymap.set('n', '<leader>pv', '<cmd>Oil<CR>', {desc = 'Open Oil'})
   vim.keymap.set('n', '<leader>t', ':terminal<CR>')
   vim.keymap.set('t', '<Esc>', '<C-\\><C-n>')
   vim.keymap.set('n', '<C-q>', '<C-^>')
@@ -433,6 +434,14 @@ do
 
   -- Shortcut for searching your Neovim configuration files
   vim.keymap.set('n', '<leader>sn', function() builtin.find_files { cwd = vim.fn.stdpath 'config', follow = true } end, { desc = '[S]earch [N]eovim files' })
+  vim.pack.add { gh 'stevearc/oil.nvim' }
+
+  require("oil").setup({
+    keymaps = {
+      ["h"] = "actions.parent",
+      ["l"] = "actions.select",
+    },
+  })
 end
 
 -- ============================================================
